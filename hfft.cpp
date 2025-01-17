@@ -17,35 +17,29 @@ void hfft_impl(real_t real[4], real_t imag[4]) {
     imag[3] = r3;
 }
 
-void hfft(hls::stream<axis_in_t> &stream_in, hls::stream<axis_out_t> &stream_out) {
+void hfft(real_t *mem_in, real_t *mem_out) {
 #pragma HLS INTERFACE mode=s_axilite bundle=control port=return
-#pragma HLS INTERFACE mode=axis port=stream_in
-#pragma HLS INTERFACE mode=axis port=stream_out
+#pragma HLS INTERFACE mode=m_axi port=mem_in depth=(N * MAX_LEN) offset=slave bundle=gmem_in
+#pragma HLS INTERFACE mode=s_axilite bundle=control port=mem_in
+#pragma HLS INTERFACE mode=m_axi port=mem_out depth=(2 * N * MAX_LEN) offset=slave bundle=gmem_out
+#pragma HLS INTERFACE mode=s_axilite bundle=control port=mem_out
 
-  handle_stream:
-    for (size_t idx = 0; idx < MAX_LEN; idx++) {
+  handle_step:
+    for (size_t step = 0; step < MAX_LEN; step++) {
         real_t real[4];
         real_t imag[4];
 
-        axis_in_t axis_in = stream_in.read();
-        axis_out_t axis_out;
-
       load_data:
         for (size_t i = 0; i < N; i++) {
-            real[i] = axis_in.data[i];
+            real[i] = mem_in[step * N + i];
         }
 
         hfft_impl(real, imag);
 
       store_data:
         for (size_t i = 0; i < N; i++) {
-            axis_out.data[2 * i] = real[i];
-            axis_out.data[2 * i + 1] = imag[i];
+            mem_out[step * 2 * N + 2 * i] = real[i];
+            mem_out[step * 2 * N + 2 * i + 1] = imag[i];
         }
-
-        axis_out.keep = -1;
-        axis_out.strb = -1;
-        axis_out.last = idx == MAX_LEN - 1;
-        stream_out.write(axis_out);
     }
 }
