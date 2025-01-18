@@ -1,7 +1,37 @@
+#include <math.h>
 #include <stdlib.h>
 #include "hfft.h"
 
-void hfft_impl(real_t real[4], real_t imag[4]) {
+template <size_t WIDTH>
+void hfft_impl(real_t real[WIDTH], real_t imag[WIDTH]) {
+    real_t even_real[WIDTH / 2];
+    real_t even_imag[WIDTH / 2];
+    real_t odd_real[WIDTH / 2];
+    real_t odd_imag[WIDTH / 2];
+
+    for (size_t i = 0; i < WIDTH / 2; i++) {
+        even_real[i] = real[2 * i];
+        even_imag[i] = imag[2 * i];
+        odd_real[i] = real[2 * i + 1];
+        odd_imag[i] = imag[2 * i + 1];
+    }
+
+    hfft_impl<WIDTH / 2>(even_real, even_imag);
+    hfft_impl<WIDTH / 2>(odd_real, odd_imag);
+
+    for (int i = 0; i < WIDTH / 2; i++) {
+        real_t t_real = (real_t) cos(-2.0 * M_PI * i / WIDTH) * odd_real[i] - (real_t) sin(-2.0 * M_PI * i / WIDTH) * odd_imag[i];
+        real_t t_imag = (real_t) sin(-2.0 * M_PI * i / WIDTH) * odd_real[i] + (real_t) cos(-2.0 * M_PI * i / WIDTH) * odd_imag[i];
+
+        real[i] = even_real[i] + t_real;
+        imag[i] = even_imag[i] + t_imag;
+        real[i + WIDTH / 2] = even_real[i] - t_real;
+        imag[i + WIDTH / 2] = even_imag[i] - t_imag;
+    }
+}
+
+template <>
+void hfft_impl<4>(real_t real[4], real_t imag[4]) {
     real_t r0 = real[0] + real[2];
     real_t r1 = real[0] - real[2];
     real_t r2 = real[1] + real[3];
@@ -26,15 +56,15 @@ void hfft(real_t *mem_in, real_t *mem_out) {
 
   handle_step:
     for (size_t step = 0; step < MAX_LEN; step++) {
-        real_t real[4];
-        real_t imag[4];
+        real_t real[N];
+        real_t imag[N];
 
       load_data:
         for (size_t i = 0; i < N; i++) {
             real[i] = mem_in[step * N + i];
         }
 
-        hfft_impl(real, imag);
+        hfft_impl<N>(real, imag);
 
       store_data:
         for (size_t i = 0; i < N; i++) {
