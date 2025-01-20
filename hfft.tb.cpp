@@ -1,7 +1,31 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <time.h>
 #include "rfft.tb.h"
+
+bool eq_real_approx(real_t v1, real_t v2) {
+    real_t diff = v1 - v2;
+    if (diff.is_neg()) {
+        diff = diff.getNeg();
+    }
+    return diff < 0.0000001;
+}
+
+template <size_t WIDTH>
+void validate_sin_cos_table() {
+    for (size_t k = 0; k < WIDTH / 2; k++) {
+        real_t cos_actual = sin_cos_table<WIDTH>.cos_at(k);
+        real_t cos_expected = cos(-2.0 * M_PI * k / WIDTH);
+        if (!eq_real_approx(cos_actual, cos_expected)) {
+            printf("wrong cos_at<%lu>(%lu): %s != %s\n", WIDTH, k, cos_actual.to_string(10).c_str(), cos_expected.to_string(10).c_str());
+        }
+
+        real_t sin_actual = sin_cos_table<WIDTH>.sin_at(k);
+        real_t sin_expected = sin(-2.0 * M_PI * k / WIDTH);
+        if (!eq_real_approx(sin_actual, sin_expected)) {
+            printf("wrong sin_at<%lu>(%lu): %s != %s\n", WIDTH, k, sin_actual.to_string(10).c_str(), sin_expected.to_string(10).c_str());
+        }
+    }
+}
 
 int main() {
     srand(time(NULL));
@@ -24,15 +48,14 @@ int main() {
 
     hfft((real_t *) real, mem_out);
 
+    validate_sin_cos_table<8>();
     for (size_t i = 0; i < MAX_LEN; i++) {
         for (size_t j = 0; j < N; j++) {
-            if (abs((float) (mem_out[2 * N * i + 2 * j] - real[i][j])) > 1e-4) {
-                printf("wrong real[%d][%d]: %f != %f\n", i, j, mem_out[2 * N * i + 2 * j].to_float(), real[i][j].to_float());
-                return 1;
+            if (!eq_real_approx(mem_out[2 * N * i + 2 * j], real[i][j])) {
+                printf("wrong real[%lu][%lu]: %s != %s\n", i, j, mem_out[2 * N * i + 2 * j].to_string(10).c_str(), real[i][j].to_string(10).c_str());
             }
-            if (abs((float) (mem_out[2 * N * i + 2 * j + 1] - imag[i][j])) > 1e-4) {
-                printf("wrong imag[%d][%d]: %f != %f\n", i, j, mem_out[2 * N * i + 2 * j + 1].to_float(), imag[i][j].to_float());
-                return 1;
+            if (!eq_real_approx(mem_out[2 * N * i + 2 * j + 1], imag[i][j])) {
+                printf("wrong imag[%lu][%lu]: %s != %s\n", i, j, mem_out[2 * N * i + 2 * j + 1].to_string(10).c_str(), imag[i][j].to_string(10).c_str());
             }
         }
     }

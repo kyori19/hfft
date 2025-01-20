@@ -1,6 +1,10 @@
-#include <math.h>
-#include <stdlib.h>
 #include "hfft.h"
+
+/**
+ * WARNING: To use this code, you need to install multiple versions of Vitis HLS.
+ *  - Use Vitis HLS 2022 for C Simulation
+ *  - Use Vitis HLS 2024 for C Synthesis
+ */
 
 template <size_t WIDTH>
 void hfft_impl(real_t real[WIDTH], real_t imag[WIDTH]) {
@@ -9,6 +13,7 @@ void hfft_impl(real_t real[WIDTH], real_t imag[WIDTH]) {
     real_t odd_real[WIDTH / 2];
     real_t odd_imag[WIDTH / 2];
 
+  divide_input:
     for (size_t i = 0; i < WIDTH / 2; i++) {
         even_real[i] = real[2 * i];
         even_imag[i] = imag[2 * i];
@@ -19,9 +24,10 @@ void hfft_impl(real_t real[WIDTH], real_t imag[WIDTH]) {
     hfft_impl<WIDTH / 2>(even_real, even_imag);
     hfft_impl<WIDTH / 2>(odd_real, odd_imag);
 
-    for (int i = 0; i < WIDTH / 2; i++) {
-        real_t t_real = (real_t) cos(-2.0 * M_PI * i / WIDTH) * odd_real[i] - (real_t) sin(-2.0 * M_PI * i / WIDTH) * odd_imag[i];
-        real_t t_imag = (real_t) sin(-2.0 * M_PI * i / WIDTH) * odd_real[i] + (real_t) cos(-2.0 * M_PI * i / WIDTH) * odd_imag[i];
+  merge_output:
+    for (size_t i = 0; i < WIDTH / 2; i++) {
+        real_t t_real = sin_cos_table<WIDTH>.cos_at(i) * odd_real[i] - sin_cos_table<WIDTH>.sin_at(i) * odd_imag[i];
+        real_t t_imag = sin_cos_table<WIDTH>.sin_at(i) * odd_real[i] + sin_cos_table<WIDTH>.cos_at(i) * odd_imag[i];
 
         real[i] = even_real[i] + t_real;
         imag[i] = even_imag[i] + t_imag;

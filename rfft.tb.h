@@ -1,5 +1,3 @@
-#include <math.h>
-#include <stdlib.h>
 #include "hfft.h"
 
 void rfft4(real_t *real, real_t *imag) {
