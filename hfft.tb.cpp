@@ -35,18 +35,17 @@ int main() {
 
     for (size_t i = 0; i < MAX_LEN; i++) {
         for (size_t j = 0; j < N; j++) {
-            real[i][j] = (real_t) rand() / RAND_MAX;
+            real[i][j] = (real_t) ((double) rand() / RAND_MAX) * 2 - 1;
             imag[i][j] = 0.0;
         }
     }
 
     real_t mem_out[2 * N * MAX_LEN];
+    hfft((real_t *) real, mem_out);
 
     for (size_t i = 0; i < MAX_LEN; i++) {
         rfft(real[i], imag[i], N);
     }
-
-    hfft((real_t *) real, mem_out);
 
     validate_sin_cos_table<8>();
     for (size_t i = 0; i < MAX_LEN; i++) {

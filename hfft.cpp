@@ -68,6 +68,7 @@ void hfft(real_t *mem_in, real_t *mem_out) {
       load_data:
         for (size_t i = 0; i < N; i++) {
             real[i] = mem_in[step * N + i];
+            imag[i] = 0.0;
         }
 
         hfft_impl<N>(real, imag);
