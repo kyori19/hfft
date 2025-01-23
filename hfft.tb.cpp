@@ -32,16 +32,19 @@ int main() {
 
     real_t real[MAX_LEN][N];
     real_t imag[MAX_LEN][N];
+    real_t mem_in[2 * N * MAX_LEN];
+    real_t mem_out[2 * N * MAX_LEN];
 
     for (size_t i = 0; i < MAX_LEN; i++) {
         for (size_t j = 0; j < N; j++) {
             real[i][j] = (real_t) ((double) rand() / RAND_MAX) * 2 - 1;
-            imag[i][j] = 0.0;
+            imag[i][j] = (real_t) ((double) rand() / RAND_MAX) * 2 - 1;
+            mem_in[2 * N * i + 2 * j] = real[i][j];
+            mem_in[2 * N * i + 2 * j + 1] = imag[i][j];
         }
     }
 
-    real_t mem_out[2 * N * MAX_LEN];
-    hfft((real_t *) real, mem_out);
+    hfft(mem_in, mem_out);
 
     for (size_t i = 0; i < MAX_LEN; i++) {
         rfft(real[i], imag[i], N);

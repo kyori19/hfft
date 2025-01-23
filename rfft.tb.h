@@ -6,12 +6,19 @@ void rfft4(real_t *real, real_t *imag) {
     real_t r2 = real[1] + real[3];
     real_t r3 = real[1] - real[3];
 
+    real_t i0 = imag[0] + imag[2];
+    real_t i1 = imag[0] - imag[2];
+    real_t i2 = imag[1] + imag[3];
+    real_t i3 = imag[1] - imag[3];
+
     real[0] = r0 + r2;
-    real[1] = r1;
-    imag[1] = -r3;
+    imag[0] = i0 + i2;
+    real[1] = r1 + i3;
+    imag[1] = i1 - r3;
     real[2] = r0 - r2;
-    real[3] = r1;
-    imag[3] = r3;
+    imag[2] = i0 - i2;
+    real[3] = r1 - i3;
+    imag[3] = i1 + r3;
 }
 
 void rfft(real_t *real, real_t *imag, int n) {

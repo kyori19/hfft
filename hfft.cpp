@@ -43,19 +43,24 @@ void hfft_impl<4>(real_t real[4], real_t imag[4]) {
     real_t r2 = real[1] + real[3];
     real_t r3 = real[1] - real[3];
 
+    real_t i0 = imag[0] + imag[2];
+    real_t i1 = imag[0] - imag[2];
+    real_t i2 = imag[1] + imag[3];
+    real_t i3 = imag[1] - imag[3];
+
     real[0] = r0 + r2;
-    imag[0] = 0.0;
-    real[1] = r1;
-    imag[1] = -r3;
+    imag[0] = i0 + i2;
+    real[1] = r1 + i3;
+    imag[1] = i1 - r3;
     real[2] = r0 - r2;
-    imag[2] = 0.0;
-    real[3] = r1;
-    imag[3] = r3;
+    imag[2] = i0 - i2;
+    real[3] = r1 - i3;
+    imag[3] = i1 + r3;
 }
 
 void hfft(real_t *mem_in, real_t *mem_out) {
 #pragma HLS INTERFACE mode=s_axilite bundle=control port=return
-#pragma HLS INTERFACE mode=m_axi port=mem_in depth=(N * MAX_LEN) offset=slave bundle=gmem_in
+#pragma HLS INTERFACE mode=m_axi port=mem_in depth=(2 * N * MAX_LEN) offset=slave bundle=gmem_in
 #pragma HLS INTERFACE mode=s_axilite bundle=control port=mem_in
 #pragma HLS INTERFACE mode=m_axi port=mem_out depth=(2 * N * MAX_LEN) offset=slave bundle=gmem_out
 #pragma HLS INTERFACE mode=s_axilite bundle=control port=mem_out
@@ -67,8 +72,8 @@ void hfft(real_t *mem_in, real_t *mem_out) {
 
       load_data:
         for (size_t i = 0; i < N; i++) {
-            real[i] = mem_in[step * N + i];
-            imag[i] = 0.0;
+            real[i] = mem_in[step * 2 * N + 2 * i];
+            imag[i] = mem_in[step * 2 * N + 2 * i + 1];
         }
 
         hfft_impl<N>(real, imag);
