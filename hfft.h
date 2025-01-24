@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <ap_axi_sdata.h>
 
-const size_t N = 8;
+const size_t N = 16;
 const size_t MAX_LEN = 16 * 1024;
 
 typedef ap_fixed<32, 4> real_t;
